@@ -1,0 +1,21 @@
+{
+  "name": "humming/template",
+  "description": "Fast Widget Template Without If Else",
+  "keywords": ["template", "widget"],
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "ZhiFeng",
+      "email": "adelete@163.com"
+    }
+  ],
+  "autoload": {
+    "psr-4": {
+      "Humming\\": "src/"
+    }
+  },
+  "require": {
+    "php": ">=5.3.0",
+    "psr/simple-cache": "~1.0.0"
+  }
+}
