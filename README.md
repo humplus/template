@@ -32,7 +32,7 @@ $template->assign('something', $somthing);
 $template->display("test");
 ```
 ```html
-:test.html
+test.html
 <html>
 <body>
 <h1>{$global.something}</h1>
@@ -55,6 +55,7 @@ class HighSchoolStudent extends \Humming\Widget
 }
 ```
 ```html
+In Template
 <html>
 <body>
 <h1>{var from=$widget.high_school_student.items.title name='Coco' limit=2 cache=3600}</h1>
