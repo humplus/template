@@ -2,15 +2,8 @@
 
 namespace Humming;
 
-use \Psr\SimpleCache\CacheInterface;
-
 class Widget implements \ArrayAccess
 {
-    /**
-     * Widget Parameters
-     * @var array
-     */
-    protected $params = array();
 
     /**
      * History Called
@@ -20,92 +13,53 @@ class Widget implements \ArrayAccess
     protected $results = array();
 
     /**
-     * Widget Instance List
-     * @var array
+     * My Thigh
+     * @var Thigh
      */
-    protected static $instances = array();
+    protected $thigh;
 
     /**
-     * Cache
-     * @var CacheInterface
+     * Set My Thigh
+     * @param Thigh $thigh
      */
-    protected static $cache;
-
-    public function __construct(CacheInterface $cache = null)
+    public function setThigh(Thigh $thigh)
     {
-        if (!empty($cache))
-            self::$cache = $cache;
-    }
-
-    /**
-     * Set Parameters
-     * @param array $params
-     */
-    public function setParameters(array $params)
-    {
-        $this->params = array_map('strval', $params);
-    }
-
-    /**
-     * TestAtHumming => test_at_humming
-     * @param $value
-     * @param string $delimiter
-     * @return string
-     */
-    public static function snake($value, $delimiter = '_')
-    {
-        $replace = '$1' . $delimiter . '$2';
-        return ctype_lower($value) ? $value : strtolower(preg_replace('/(.)([A-Z])/', $replace, $value));
-    }
-
-    /**
-     * test_at_humming => TestAtHumming
-     * @param $value
-     * @return mixed
-     */
-    public static function studly($value)
-    {
-        $value = ucwords(str_replace(array('-', '_'), ' ', $value));
-        return str_replace(' ', '', $value);
+        $this->thigh = $thigh;
     }
 
     /**
      * Get Widget Result
      * @param mixed $offset
-     * @return array|mixed
-     * @throws \InvalidArgumentException
+     * @return mixed|object
+     * @throws \Psr\SimpleCache\InvalidArgumentException
      * @throws \ReflectionException
      */
     public function offsetGet($offset)
     {
-        $class = get_class($this);
-        //Base Class Called
-        if ('Humming\Widget' == $class) {
-            if (isset(self::$instances[$offset])) {
-                return self::$instances[$offset];
-            }
-            $class = self::studly($offset);
-            return self::$instances[$offset] = new $class;
-        }
-        //Sub Class Called
-        $method = sprintf('get%s', self::studly($offset));
-        $called = sprintf('widget.%s.%s.', array_search($this, self::$instances), $offset);
+        $method = sprintf('get%s', Thigh::studly($offset));
+        $called = sprintf('widget.%s.%s', Thigh::snake(get_class($this)), $offset);
 
         if (!method_exists($this, $method)) {
             throw new \RuntimeException("$called is not defined!");
         }
+
+        $params = $this->thigh->getParameters();
         $ttl = -1;
-        if (isset($this->params['cache']) && false !== filter_var($this->params['cache'], FILTER_VALIDATE_INT)) {
-            $ttl = intval($this->params['cache']);
-            unset($this->params['cache']);
+        if (isset($params['cache']) && false !== filter_var($params['cache'], FILTER_VALIDATE_INT)) {
+            $ttl = intval($params['cache']);
+            unset($params['cache']);
         }
+
         $parameters = array();
-        if (!empty($this->params)) {
+        if (!empty($params)) {
             $function = new \ReflectionMethod ($this, $method);
             foreach ($function->getParameters() as $parameter) {
                 $name = $parameter->getName();
-                if (array_key_exists($name, $this->params)) {
-                    $parameters [] = $this->params[$name];
+                if (array_key_exists($name, $params)) {
+                    $parameters [] = $params[$name];
+                    $called .= ".{$params[$name]}";
+                } elseif (!is_null($this->thigh->getContainer()) && $this->thigh->getContainer()->has($name)) {
+                    $parameters [] = $this->thigh->getContainer()->get($name);
                 } elseif ($parameter->isDefaultValueAvailable()) {
                     $parameters [] = $parameter->getDefaultValue();
                 } else {
@@ -114,16 +68,12 @@ class Widget implements \ArrayAccess
             }
         }
 
-        if (!empty($parameters)) {
-            $called .= implode('.', $parameters);
-        }
-
         if (isset($this->results[$called])) {
             return $this->results[$called];
         }
 
-        if ($ttl >= 0 && !is_null(self::$cache)) {
-            $result = self::$cache->get($called);
+        if ($ttl >= 0 && !is_null($this->thigh->getCache())) {
+            $result = $this->thigh->getCache()->get($called);
             if (false !== $result) {
                 $result = json_decode($result, true);
                 return $this->results[$called] = $result['items'];
@@ -134,10 +84,11 @@ class Widget implements \ArrayAccess
                     'created_at' => date("Y-m-d H:i:s"),
                     'items' => $this->results[$called]
                 );
-                self::$cache->set($called, json_encode($result), $ttl);
+                $this->thigh->getCache()->set($called, json_encode($result), $ttl);
                 return $this->results[$called];
             }
         }
+        
         return $this->results[$called] = isset($function) ? $function->invokeArgs($this, $parameters) : $this->$method();
     }
 
@@ -153,11 +104,6 @@ class Widget implements \ArrayAccess
 
     public function offsetExists($offset)
     {
-        $class = get_class($this);
-        if ('Humming\Widget' == $class) {
-            return true;
-        } else {
-            return method_exists($this, sprintf('get%s', self::studly($offset)));
-        }
+        return method_exists($this, sprintf('get%s', Thigh::studly($offset)));
     }
 }

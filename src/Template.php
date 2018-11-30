@@ -75,14 +75,14 @@ class Template
      * Template constructor.
      * @param $dir
      * @param $temp
-     * @param Widget $widget
+     * @param Thigh $thigh
      * @param Pagination $pagination
      */
-    public function __construct($dir, $temp, Widget $widget, Pagination $pagination)
+    public function __construct($dir, $temp, Thigh $thigh, Pagination $pagination)
     {
         $this->dir = $dir;
         $this->temp = $temp;
-        $this->widget = $widget;
+        $this->widget = $thigh;
         $this->pagination = $pagination;
     }
 
