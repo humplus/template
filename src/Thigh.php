@@ -90,20 +90,20 @@ class Thigh implements \ArrayAccess
             $constructor = $reflector->getConstructor();
             if (is_null($constructor)) {
                 self::$widgets[$offset] = new $class;
-            }
-            $params = array();
-            foreach ($constructor->getParameters() as $parameter) {
-                $name = $parameter->getName();
-                if (!is_null($this->container) && $this->container->has($name)) {
-                    $params [] = $this->container->get($name);
-                } elseif ($parameter->isDefaultValueAvailable()) {
-                    $params [] = $parameter->getDefaultValue();
-                } else {
-                    throw new \InvalidArgumentException ("Class {$class} require parameter {$name}!");
+            } else {
+                $params = array();
+                foreach ($constructor->getParameters() as $parameter) {
+                    $name = $parameter->getName();
+                    if (!is_null($this->container) && $this->container->has($name)) {
+                        $params [] = $this->container->get($name);
+                    } elseif ($parameter->isDefaultValueAvailable()) {
+                        $params [] = $parameter->getDefaultValue();
+                    } else {
+                        throw new \InvalidArgumentException ("Class {$class} require parameter {$name}!");
+                    }
                 }
+                self::$widgets[$offset] = $reflector->newInstanceArgs($params);
             }
-
-            self::$widgets[$offset] = $reflector->newInstanceArgs($params);
         }
         if (!self::$widgets[$offset] instanceof Widget) {
             throw new \LogicException("Widget must inherit \Humming\Widget class");

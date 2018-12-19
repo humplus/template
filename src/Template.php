@@ -348,7 +348,7 @@ class Template
         $param = preg_replace("/'\\$(.*)',/isU", "\$\\1,", $param);
         $param = str_replace('\\\'', '\'', $param);
 
-        return "<?php \$this->widget['{$widget}']->setParameters($param);?>\n";
+        return "<?php \$this->widget->setParameters($param);?>\n";
     }
 
     /**
