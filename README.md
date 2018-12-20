@@ -26,7 +26,9 @@ require '/path/to/vendor/autoload.php';
 
 $templateDir = __DIR__ . '/template';
 $compiledDir = __DIR__ . '/compiled';
-$template = new \Humming\Template($templateDir, $compiledDir, new \Humming\Widget(), new \Humming\Pagination());
+$cache = new Psr\SimpleCache\CacheInterface();
+$container = new Psr\Container\ContainerInterface();
+$template = new \Humming\Template($templateDir, $compiledDir, new \Humming\Thigh($cache, $container), new \Humming\Pagination());
 
 $template->assign('something', $somthing);
 $template->display("test");
