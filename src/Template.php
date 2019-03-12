@@ -133,7 +133,7 @@ class Template
         }
         ob_start();
         include $this->compiled($template);
-        return $output ? ob_end_flush() : ob_get_flush();
+        return $output ? ob_end_flush() : ob_get_clean();
     }
 
     /**
